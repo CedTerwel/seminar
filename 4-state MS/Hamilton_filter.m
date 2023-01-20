@@ -20,6 +20,9 @@ for t = 1:T
         %predictedxi(:,t) = P*[ 1 ; 0 ]; % start in state 1
         %predictedxi(:,t) = P*[ 0 ; 1 ]; % start in state 2
         %predictedxi(:,t) = [ (1-p22) / (2-p11-p22) ; (1-p11)/(2-p11-p22) ]; % unconditional probability
+        % Determine eigenvalues with det(P-\lambda * I) = 0, than use
+        % \lambda in solving (P - \lambda*I)v = 0, where v is the
+        % eigenvector
         predictedxi(:,t) = [ 0.25 ; 0.25 ; 0.25 ; 0.25 ];
         
     else
