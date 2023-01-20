@@ -15,7 +15,7 @@ T = size(y,2);
 %% === Maximum Likelihood ===
 
 % Starting values based roughly on the data
-% starting values = [p_{11},p_{22},[mu_1;mu_2],[sigma_1;sigma_2] ]
+% starting values = [p_{11},p_{22},[mu_1;mu_2],[beta_1;beta_2],[sigma_1;sigma_2] ]
 startingvalues = [0.8;0.8;[mean(y);mean(y)];[0.9; 0.9];[1/2*std(y);2*std(y)]];
 
 % It is useful to take the starting points *not* symmetric in sigma_1 and
@@ -86,6 +86,16 @@ set(gca,'FontSize',14)
 set(gca,'FontName','Times New Roman')
 %legend('Data','Predicted state','Filtered state','Smoothed state')
 legend('Data','Smoothed state')
+
+%% Make 1- and 2-step ahead forecasts
+% Forecast xi
+P   = [ p11 , 1-p22 ; 1-p11 , p22];
+fcast1xi = P*smoothedxi(:,end);
+fcast2xi = (P^2)*smoothedxi(:,end);
+
+% Forecast y and calculate forecast errors
+fcastY = [fcast1xi'*mu, fcast2xi'*mu];
+fcastError = [y190-fcastY(1,1), y191-fcastY(1,2)];
 
 % %% === EM Algorithm ===
 % 
