@@ -2,25 +2,16 @@ clear all
 
 format bank
 
-% load data.mat
-% data = table2array(data);
-
-% noEMiterations = 1000; % how many iterations of the EM algorithm
-% printEMupdates = 0; % toggle EM updates on (1) or off (0 - or any other value, really)
-% 
-% y = data(:,3)';
-% T = size(y,2);
-
 load ccreturns_clean.mat
-%data = table2array(data);
 
 noEMiterations = 1000; % how many iterations of the EM algorithm
 printEMupdates = 0; % toggle EM updates on (1) or off (0 - or any other value, really)
 
-%y = data(:,3)';
-y = ccreturns_clean(2:120*5)';
+endFcast = 40;
+startEst = 1;
+endEst   = 20;
+y = ccreturns_clean((119*(startEst-1)+1):(119*endEst))';
 T = size(y,2);
-
 
 %% === Maximum Likelihood ===
 
@@ -79,78 +70,46 @@ sigma = parameters_ML1(5:6,1);
 [ filteredxi , predictedxi ] = Hamilton_filter(p11,p22,mu,sigma,y);
 [ smoothedxi ,xi0_out , Pstar ] = Hamilton_smoother(p11,p22,mu,sigma,y);
 
-figure
-plot(y,'k','Linewidth',0.3)
-hold on
-plot(predictedxi(2,:),'c','Linewidth',2)
-hold on
-plot(filteredxi(2,:),'g','Linewidth',2)
-hold on
-plot(smoothedxi(2,:),'b:','Linewidth',2)
-hold on
-axis([0 inf -8 8])
-%axis([0 inf -1 1])
-hold off
-set(gca,'FontSize',14)
-set(gca,'FontName','Times New Roman')
-legend('Data','Predicted state','Filtered state','Smoothed state')
-% legend('Data','Smoothed state')
+% figure
+% plot(y,'k','Linewidth',0.3)
+% hold on
+% plot(predictedxi(2,:),'c','Linewidth',2)
+% hold on
+% plot(filteredxi(2,:),'g','Linewidth',2)
+% hold on
+% plot(smoothedxi(2,:),'b:','Linewidth',2)
+% hold on
+% axis([0 inf -8 8])
+% %axis([0 inf -1 1])
+% hold off
+% set(gca,'FontSize',14)
+% set(gca,'FontName','Times New Roman')
+% legend('Data','Predicted state','Filtered state','Smoothed state')
 
-% %% === EM Algorithm ===
-% 
-% % Initialize parameter values for first EM run
-% p11   = 0.8;
-% p22   = 0.8;
-% mu1   = mean(y);
-% mu2   = mean(y);
-% sigma1= 0.5*std(y);
-% sigma2= 1.5*std(y);
-% xi0_in = [0.5;0.5];
-% 
-% %% Iterations
-% iteration=0; % counter for iterations
-% 
-% format long
-% 
-% parameters_EM = nan(8,noEMiterations);
-% LogL_EM = nan(1,noEMiterations);
-% 
-% for iter = 1:noEMiterations
-%   % Run EM step
-%   [p11,p22,mu1,mu2,sigma1,sigma2,xi0_out] = EM_step(p11,p22,mu1,mu2,sigma1,sigma2,xi0_in,y);
-%   
-%   % Set in=out to make sure we update:
-%   xi0_in = xi0_out;
-%   
-%   % Save the parameters
-%   parameters_EM(:,iter) = [p11;p22;mu1;mu2;sigma1;sigma2;xi0_out];
-%   
-%   % print the latest parameters
-%   if printEMupdates == 1
-%     disp(parameters_EM(:,iter))
-%   end
-%   
-%   % Calculate the log-likelihood at these parameters
-%   LogL_EM(iter) = - NegativeLogLikelihood2(parameters_EM(:,iter),y);
-%   
-%  end
-% 
-% %% Ideally, both the likelihood and the parameters should converge pretty quickly
-% figure
-% plot(LogL_EM,'LineWidth',2);
-% 
-% figure
-% plot(parameters_EM(1:6,:)','LineWidth',2);
-% 
-% 
-% %% Compare the obtained parameters by ML and EM
-% format short
-% long_term_average =  [(1-p22) / (2-p11-p22);(1-p11)/(2-p11-p22)];
-% 
-% disp("Parameter and long term average for ML1, ML2 and EM")
-% disp([[parameters_ML1;long_term_average],[parameters_ML2;long_term_average],parameters_EM(:,end)])
-% 
-% %% Compare the obtained log likelihoods
-% format bank
-% disp("Log likelihoods: ML1, ML2, EM")
-% disp([NegativeLogLikelihood(parameters_ML1,y),NegativeLogLikelihood(parameters_ML2,y),NegativeLogLikelihood2(parameters_EM(:,end),y)])
+%% Make 1-step ahead forecasts
+P      = [ p11 , 1-p22 ; 1-p11 , p22];
+count  = 0;
+wealth = 100;
+
+for t = 1:(119 * (endFcast - endEst))
+    [smoothedxi , ~, ~] = Hamilton_smoother(p11, p22, mu, sigma, ...
+                                            ccreturns_clean(1:(119 * endEst + t - 1))');
+    fcast1xi(:,t) = P * smoothedxi(:, end);
+    fcastY(t)     = fcast1xi(:, t)' * mu;
+    fcastError(t) = ccreturns_clean(119 * endEst + t) - fcastY(t);
+        
+    if fcastY(t) > 0
+        wealth = wealth * (1 + ccreturns_clean(119 * endEst + t) / 100);
+    end
+    
+    if floor((t-1)/119) == ((t-1)/119)
+        count = count + 1
+    end  
+end
+MSE = sum(fcastError.^2) / length(fcastError)
+
+plot(fcastY)
+hold on
+plot(ccreturns_clean(119*endEst+1:119*endFcast))
+hold off
+legend('fcast', 'real')
