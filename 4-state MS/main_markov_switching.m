@@ -7,7 +7,7 @@ load ccreturns_clean.mat
 noEMiterations = 1000; % how many iterations of the EM algorithm
 printEMupdates = 0; % toggle EM updates on (1) or off (0 - or any other value, really)
 
-y = ccreturns_clean(1:end)';
+y = ccreturns_clean(119*75:119*100)';
 T = size(y,2);
 
 
