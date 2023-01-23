@@ -3,7 +3,6 @@ clear all
 format bank
 
 load ccreturns_clean.mat
-%data = table2array(data);
 
 noEMiterations = 1000; % how many iterations of the EM algorithm
 printEMupdates = 0; % toggle EM updates on (1) or off (0 - or any other value, really)
@@ -96,62 +95,3 @@ fcast2xi = (P^2)*smoothedxi(:,end);
 % Forecast y and calculate forecast errors
 fcastY = [fcast1xi'*mu, fcast2xi'*mu];
 fcastError = [y190-fcastY(1,1), y191-fcastY(1,2)];
-
-% %% === EM Algorithm ===
-% 
-% % Initialize parameter values for first EM run
-% p11   = 0.8;
-% p22   = 0.8;
-% mu1   = mean(y);
-% mu2   = mean(y);
-% sigma1= 0.5*std(y);
-% sigma2= 1.5*std(y);
-% xi0_in = [0.5;0.5];
-% 
-% %% Iterations
-% iteration=0; % counter for iterations
-% 
-% format long
-% 
-% parameters_EM = nan(8,noEMiterations);
-% LogL_EM = nan(1,noEMiterations);
-% 
-% for iter = 1:noEMiterations
-%   % Run EM step
-%   [p11,p22,mu1,mu2,sigma1,sigma2,xi0_out] = EM_step(p11,p22,mu1,mu2,sigma1,sigma2,xi0_in,y);
-%   
-%   % Set in=out to make sure we update:
-%   xi0_in = xi0_out;
-%   
-%   % Save the parameters
-%   parameters_EM(:,iter) = [p11;p22;mu1;mu2;sigma1;sigma2;xi0_out];
-%   
-%   % print the latest parameters
-%   if printEMupdates == 1
-%     disp(parameters_EM(:,iter))
-%   end
-%   
-%   % Calculate the log-likelihood at these parameters
-%   LogL_EM(iter) = - NegativeLogLikelihood2(parameters_EM(:,iter),y);
-%   
-%  end
-% 
-% %% Ideally, both the likelihood and the parameters should converge pretty quickly
-% figure
-% plot(LogL_EM,'LineWidth',2);
-% 
-% figure
-% plot(parameters_EM(1:6,:)','LineWidth',2);
-% 
-% 
-% %% Compare the obtained parameters by ML and EM
-% format short
-% long_term_average =  [(1-p22) / (2-p11-p22);(1-p11)/(2-p11-p22)];
-% 
-% disp("Parameter and long term average for ML1, ML2 and EM")
-% disp([[parameters_ML1;long_term_average],[parameters_ML2;long_term_average],parameters_EM(:,end)])
-% 
-% %% Compare the obtained log likelihoods
-% format bank
-% disp("Log likelihoods: ML1, ML2, EM")
-% disp([NegativeLogLikelihood(parameters_ML1,y),NegativeLogLikelihood(parameters_ML2,y),NegativeLogLikelihood2(parameters_EM(:,end),y)])
