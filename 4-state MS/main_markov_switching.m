@@ -4,6 +4,8 @@ format bank
 
 load ccreturns_clean.mat
 
+GeilHoertje = 69;
+
 noEMiterations = 1000; % how many iterations of the EM algorithm
 printEMupdates = 0; % toggle EM updates on (1) or off (0 - or any other value, really)
 
